@@ -1,0 +1,282 @@
+<html>
+<head>
+   <title>Speech SDK JavaScript Quickstart</title>
+<style>
+
+body{
+  background-color:rgb(240, 44, 70);
+}
+
+.container{
+  width:250px;
+  height:200px;
+  margin: 5% auto 20% auto;
+  color:white;
+  font-size:1rem;
+  font-family:Arial,Helvetica Neue,Helvetica,sans-serif;
+  
+  }
+h1{
+  text-align:center;
+}
+h2 {
+  font-weight: normal;
+    font-size: 40px;
+    color: blue;
+}
+.button{
+  
+  font-size: 3rem;
+  border:10px solid white;
+  border-radius:100px;
+  width:125px;
+  height:125px;
+  padding:5px;
+  margin: 10% auto;
+  transition: .5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+ 
+}
+
+.icon{
+ position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+ text-align:center;
+  
+}
+
+.button:hover{
+  width:125px;
+  background-color: white;
+  box-shadow: 0px 5px 5px rgba(0,0,0,0.2);
+  color: #91CCC2;
+  transition:.3s;
+}
+
+.button:active{
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+  transition: .05s
+}
+.heading {
+  padding: 1%;
+  text-align: center;
+  color:white;
+  font-size:50px;
+}
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 25px;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+p {
+  font-size: 35px;
+}
+@media only screen and (min-width: 600px) {
+  .container{
+  width:250px;
+  height:160px;
+  margin: 1% auto 1% auto;
+  }
+  .heading {
+    font-size: 25px;
+  }
+
+  .button{
+  
+  font-size: 3rem;
+  border:5px solid white;
+  border-radius:100px;
+  width:75px;
+  height:75px;
+  padding:5px;
+  margin: 5% auto;
+  transition: .5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+ 
+}
+
+}
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+   <!-- Speech SDK reference sdk. -->
+<script src="support/microsoft.cognitiveservices.speech.sdk.bundle.js"></script>
+<!-- Speech SDK USAGE -->
+<script>
+    // status fields and start button in UI
+    var phraseDiv;
+    var startRecognizeOnceAsyncButton;
+  
+    // subscription key and region for speech services.
+    var subscriptionKey, serviceRegion;
+    var SpeechSDK;
+    var recognizer;
+  
+    document.addEventListener("DOMContentLoaded", function () {
+      startRecognizeOnceAsyncButton = document.getElementById("startRecognizeOnceAsyncButton");
+      subscriptionKey = 'c3a3769f8dbb41c3914615be36166ad4';
+      serviceRegion = 'westus';
+      phraseDiv = document.getElementById("phraseDiv");
+  
+      startRecognizeOnceAsyncButton.addEventListener("click", function () {
+        startRecognizeOnceAsyncButton.disabled = true;
+        phraseDiv.innerHTML = "";
+        var speechConfig = SpeechSDK.SpeechConfig.fromSubscription(subscriptionKey, serviceRegion);
+        speechConfig.speechRecognitionLanguage = "en-US";
+        var audioConfig  = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+        recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+        recognizer.recognizeOnceAsync(
+          function (result) {
+            startRecognizeOnceAsyncButton.disabled = false;
+            // phraseDiv.innerHTML += 'Your Input: '+result.text +'<br/>';
+            //var URL='https://projectspringboot.azurewebsites.net';
+            var URL='https://projectspringboot.azurewebsites.net';
+            if (result.text != null) {
+              if (result.text.toUpperCase().includes('PROFILE')) {
+                URL +='/banking/customerinfo';
+              } else if (result.text.toUpperCase().includes('STATEMENT')) {
+                URL +='/banking/accountstatement';
+              } else if (result.text.toUpperCase().includes('BALANCE')) {
+                URL +='/banking/balance';
+              }
+            }
+            var divpara = document.getElementById("phraseDiv");
+            divpara.style.background = "white";
+            divpara.style.padding = "2%";
+            if ( URL !== 'https://projectspringboot.azurewebsites.net') {
+              var request = new XMLHttpRequest()
+              phraseDiv.innerHTML = '';
+              request.open('GET', URL, true)
+              request.onload = function() {
+                var data = JSON.parse(this.response)
+                if (request.status >= 200 && request.status < 400) {
+                  if (URL === 'https://projectspringboot.azurewebsites.net/banking/balance') {
+                    var para = document.createElement("p");
+                    var node = document.createTextNode("Hi  "+data.accountVO.acHolderName+"!");
+                    para.appendChild(node);
+                    var para1 = document.createElement("p");
+                    var node1 = document.createTextNode("You have  "+data.balanceAmount+" in Account No: "+data.accountVO.accountNumber);
+                    para1.appendChild(node1);
+                    divpara.appendChild(para);
+                    divpara.appendChild(para1);
+                  } else if (URL === 'https://projectspringboot.azurewebsites.net/banking/accountstatement') {
+                    var para = document.createElement("p");
+                    var node = document.createTextNode("Hi  "+data[0].accountInfo.acHolderName+"!");
+                    para.appendChild(node);
+                    var para1 = document.createElement("p");
+                    var node1 = document.createTextNode("Please find you account statement as below:");
+                    para1.appendChild(node1);
+                    divpara.appendChild(para);
+                    divpara.appendChild(para1);
+                    for (i = 0; i <  data.length; i++) {
+                   	 var para2 = document.createElement("p");
+                        var node2 = document.createTextNode(data[i].date+" "+data[i].accountInfo.accountNumber +" "+data[i].amount+" "+data[i].dr_cr);
+                        para2.appendChild(node2);
+                        divpara.appendChild(para2);
+                   	}
+
+                  } else if (URL === 'https://projectspringboot.azurewebsites.net/banking/customerinfo') {
+                    var para = document.createElement("p");
+                    var node = document.createTextNode("Hi  "+data.name+"!");
+                    para.appendChild(node);
+                    var para1 = document.createElement("p");
+                    var node1 = document.createTextNode("You have below account(s) with us");
+                    para1.appendChild(node1);
+                    divpara.appendChild(para);
+                    divpara.appendChild(para1);
+                   	var para2 = document.createElement("p");
+                    var node2 = document.createTextNode(data.accontInfo.accountNumber +' '+data.accontInfo.accountType);
+                    para2.appendChild(node2);
+                    divpara.appendChild(para2);
+         
+                  }
+                } else {
+                  phraseDiv.innerHTML +='error' ;
+                }
+              }
+              request.send()
+            } else {
+              var para = document.createElement("p");
+              var node = document.createTextNode("Sorry I could not understand your request.");
+              para.appendChild(node);
+              var para1 = document.createElement("p");
+              var node1 = document.createTextNode("Please Use below keywords in your command: ");
+              para1.appendChild(node1);              
+              var para2 = document.createElement("p");
+              var node2 = document.createTextNode("1. Statement 2.Balance 3. Profile ");
+              para2.appendChild(node2);
+              divpara.appendChild(para);
+              divpara.appendChild(para1);
+              divpara.appendChild(para2);
+            }
+            recognizer.close();
+            recognizer = undefined;
+          },
+          function (err) {
+            startRecognizeOnceAsyncButton.disabled = false;
+            phraseDiv.innerHTML += err;
+            window.console.log(err);
+  
+            recognizer.close();
+            recognizer = undefined;
+          });
+      });
+  
+      if (!!window.SpeechSDK) {
+        SpeechSDK = window.SpeechSDK;
+        startRecognizeOnceAsyncButton.disabled = false;  
+        // in case we have a function for getting an authorization token, call it.
+        if (typeof RequestAuthorizationToken === "function") {
+            RequestAuthorizationToken();
+        }
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="heading">
+      <h1>Bank Over Voice</h1>
+  </div>
+  <div class="container">
+    <div class="button" id="startRecognizeOnceAsyncButton">
+      <div class="icon">
+        <i class="fa fa-microphone"></i>
+      </div>
+    </div>
+    <h1>Click To Start</h1>
+  </div>
+  <div id="phraseDiv">
+    
+    <!-- <h2>Welcome User ! &nbsp; Please find the details Below:</h2>
+    <table>
+        <tr>
+          <th>Company</th>
+          <th>Contact</th>
+          <th>Country</th>
+        </tr>
+        <tr>
+          <td>Alfreds Futterkiste</td>
+          <td>Maria Anders</td>
+          <td>Germany</td>
+        </tr>
+        <tr>
+          <td>Centro comercial Moctezuma</td>
+          <td>Francisco Chang</td>
+          <td>Mexico</td>
+        </tr>
+      </table> -->
+  </div>
+    
+</body>
+</html>
